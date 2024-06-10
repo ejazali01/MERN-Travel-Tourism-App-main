@@ -20,6 +20,9 @@ import {
 } from "firebase/storage";
 import { app } from "../../firebase";
 import "./styles/DashboardStyle.css";
+import AdminUpdateProfile from "./AdminUpdateProfile";
+import { Button } from "@material-tailwind/react";
+import toast from "react-hot-toast";
 
 const AdminProfile = () => {
   const navigate = useNavigate();
@@ -28,6 +31,9 @@ const AdminProfile = () => {
   const { currentUser, loading, error } = useSelector((state) => state.user);
   const [profilePhoto, setProfilePhoto] = useState(undefined);
   const [photoPercentage, setPhotoPercentage] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [changePassword, setChangePassword] = useState(false);
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -82,7 +88,7 @@ const AdminProfile = () => {
             );
             const data = await res.json();
             if (data?.success) {
-              alert(data?.message);
+              toast.success(data?.message);
               setFormData({ ...formData, avatar: downloadUrl });
               dispatch(updateUserSuccess(data?.user));
               setProfilePhoto(null);
@@ -91,7 +97,7 @@ const AdminProfile = () => {
               dispatch(updateUserFailure(data?.message));
             }
             dispatch(updateUserFailure(data?.message));
-            alert(data?.message);
+            toast.error(data?.message);
           });
         }
       );
@@ -111,7 +117,7 @@ const AdminProfile = () => {
       }
       dispatch(logOutSuccess());
       navigate("/login");
-      alert(data?.message);
+      toast.success(data?.message);
     } catch (error) {
       console.log(error);
     }
@@ -131,14 +137,15 @@ const AdminProfile = () => {
         const data = await res.json();
         if (data?.success === false) {
           dispatch(deleteUserAccountFailure(data?.message));
-          alert("Something went wrong!");
+          toast.error("Something went wrong!");
           return;
         }
         dispatch(deleteUserAccountSuccess());
-        alert(data?.message);
+        toast.success(data?.message);
       } catch (error) {}
     }
   };
+  
   return (
     <>
       <div className="flex w-full flex-wrap max-sm:flex-col p-2">
@@ -200,19 +207,26 @@ const AdminProfile = () => {
                     )}
                   </div>
 
-                  <div className="leading-4 flex flex-col gap-2">
-                    <p className="text-3xl font-semibold ">
+                  <div className="leading-4 flex text-gray-600 flex-col gap-2">
+                    <p className="text-3xl text-gray-800 font-semibold ">
                       Hi {currentUser.username} !
                     </p>
                     <p className="text-sm font-normal">
                       Email: {currentUser.email}
                     </p>
+                    <p className="text-md font-normal">
+                      Phone: {currentUser.phone}
+                    </p>
+                    <p className="text-md font-normal">
+                      Address: {currentUser.address}
+                    </p>
                   </div>
                 </div>
 
                 <div className="w-fullflex justify-between px-1">
-                  <button
-                    onClick={() => setActivePanelId(8)}
+                  <Button
+                    onClick={() => setOpen(!open)}
+                    data-dialog-target="profile-update-dialog"
                     className="text-blue-500 text-lg self-end bg-gray-300 p-1 rounded-lg hover:bg-gray-400"
                   >
                     <svg
@@ -229,26 +243,28 @@ const AdminProfile = () => {
                         d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                       />
                     </svg>
-                    
-                  </button>
+                  </Button>
                 </div>
-                
               </div>
 
-              <div className="w-full p-3 break-all border-t-2 border-gray-900 border-dotted">
-                <p className="text-md font-normal">
-                  Phone: {currentUser.phone}
-                </p>
-                <p className="text-md font-normal">
-                  Address: {currentUser.address}
-                </p>
-              </div>
+              <div className="w-full p-3 break-all border-t-2 border-gray-900 border-dotted"></div>
+              {/* change password */}
+              <button
+                disabled={loading}
+                type="button"
+                onClick={() => setChangePassword(!changePassword)}
+                className="inline-block max-w-[200px] p-2 text-gray-700 bg-gray-400 rounded hover:opacity-95"
+              >
+                {loading ? "Loading..." : "Change Password"}
+              </button>
+              {/* logout */}
               <button
                 onClick={handleLogout}
-                className="text-red-600 text-lg font-semibold self-start border border-red-600 p-1 rounded-lg hover:bg-red-600 hover:text-white"
+                className="inline-block text-red-600 max-w-[200px] text-lg font-semibold self-start border border-red-600 p-1 rounded-lg hover:bg-red-600 hover:text-white"
               >
                 Logout
               </button>
+              {/* delete account */}
               <button
                 onClick={handleDeleteAccount}
                 className="text-red-600 text-lg font-semibold self-start border border-red-600 p-1 rounded-lg hover:bg-red-600 hover:text-white"
@@ -263,6 +279,21 @@ const AdminProfile = () => {
           </div>
         )}
       </div>
+
+      {open && (
+        <div>
+          <AdminUpdateProfile open={open} setOpen={setOpen} />
+        </div>
+      )}
+
+      {changePassword && (
+        <div>
+          <AdminUpdateProfile
+            changePassword={changePassword}
+            setChangePassword={setChangePassword}
+          />
+        </div>
+      )}
     </>
   );
 };

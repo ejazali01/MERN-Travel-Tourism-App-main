@@ -8,12 +8,18 @@ import {
   updatePassSuccess,
   updatePassFailure,
 } from "../../redux/user/userSlice";
+import toast from "react-hot-toast";
+import { Button, Spinner } from "@material-tailwind/react";
 
-const AdminUpdateProfile = () => {
-  const { currentUser, loading, error } = useSelector((state) => state.user);
+const AdminUpdateProfile = ({
+  open,
+  setOpen,
+  setChangePassword,
+  changePassword,
+}) => {
   const dispatch = useDispatch();
-  const [updateProfileDetailsPanel, setUpdateProfileDetailsPanel] =
-    useState(true);
+  const { currentUser, loading, error } = useSelector((state) => state.user);
+
   const [formData, setFormData] = useState({
     username: "",
     address: "",
@@ -39,14 +45,14 @@ const AdminUpdateProfile = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
   const handlePass = (e) => {
     setUpdatePassword({
       ...updatePassword,
-      [e.target.id]: e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -57,7 +63,7 @@ const AdminUpdateProfile = () => {
       currentUser.address === formData.address &&
       currentUser.phone === formData.phone
     ) {
-      alert("Change atleast 1 field to update details");
+      toast.error("Change atleast 1 field to update details");
       return;
     }
     try {
@@ -73,16 +79,17 @@ const AdminUpdateProfile = () => {
       if (data.success === false && res.status !== 201 && res.status !== 200) {
         dispatch(updateUserSuccess());
         dispatch(updateUserFailure(data?.messsage));
-        alert("Session Ended! Please login again");
+        toast.error("Session Ended! Please login again");
         navigate("/login");
         return;
       }
       if (data.success && res.status === 201) {
-        alert(data?.message);
+        toast.success(data?.message);
+        setOpen(false);
         dispatch(updateUserSuccess(data?.user));
         return;
       }
-      alert(data?.message);
+      dispatch(updatePassFailure(data?.message));
       return;
     } catch (error) {
       console.log(error);
@@ -95,11 +102,11 @@ const AdminUpdateProfile = () => {
       updatePassword.oldpassword === "" ||
       updatePassword.newpassword === ""
     ) {
-      alert("Enter a valid password");
+      toast.error("Enter a valid password");
       return;
     }
     if (updatePassword.oldpassword === updatePassword.newpassword) {
-      alert("New password can't be same!");
+      toast.error("New password can't be same!");
       return;
     }
     try {
@@ -115,16 +122,21 @@ const AdminUpdateProfile = () => {
       if (data.success === false && res.status !== 201 && res.status !== 200) {
         dispatch(updateUserSuccess());
         dispatch(updatePassFailure(data?.message));
-        alert("Session Ended! Please login again");
+        toast.error("Session Ended! Please login again");
         navigate("/login");
         return;
       }
-      dispatch(updatePassSuccess());
-      alert(data?.message);
-      setUpdatePassword({
-        oldpassword: "",
-        newpassword: "",
-      });
+
+      if (data.success && res.status === 201) {
+        toast.success(data?.message);
+        dispatch(updatePassSuccess());
+        setUpdatePassword({
+          oldpassword: "",
+          newpassword: "",
+        });
+        setChangePassword(false);
+      }
+      dispatch(updatePassFailure(data?.message));
       return;
     } catch (error) {
       console.log(error);
@@ -132,115 +144,221 @@ const AdminUpdateProfile = () => {
   };
 
   return (
-    <div
-      className={`updateProfile w-full p-3 m-1 transition-all duration-300 flex justify-center`}
-    >
-      {updateProfileDetailsPanel === true ? (
-        <div className="flex flex-col border self-center shadow-2xl border-gray-400 rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">Update Profile</h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              className="p-1 rounded border border-black"
-              value={formData.username}
-              onChange={handleChange}
-            />
+    <div className="w-full">
+      {open === true && (
+        <div
+          data-dialog-backdrop="sign-in-dialog"
+          data-dialog-backdrop-close="true"
+          className=" fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-white bg-opacity-0  backdrop-blur-sm transition-opacity duration-300"
+        >
+          <div className="relative mx-auto flex w-full max-w-[24rem] flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md">
+            <form onSubmit={updateUserDetails}>
+              <div className="flex flex-col gap-4 p-6">
+                <div className="flex justify-between">
+                  <h4 className="block font-sans text-2xl antialiased font-semibold leading-snug tracking-normal text-blue-gray-900">
+                    Update Profile
+                  </h4>
+
+                  <button
+                    className="flex justify-center items-center h-8 max-h-[32px] w-8 max-w-[32px] select-none rounded-lg text-center align-middle font-sans text-xs font-medium uppercase text-gray-800 bg-gray-200/20 transition-all hover:bg-gray-300/50 active:bg-gray-300/50 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                    type="button"
+                    onClick={() => setOpen(false)}
+                  >
+                    <span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="w-6 h-6"
+                        stroke-width="2"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+                <p className="block mb-3 text-center font-sans text-base antialiased font-normal leading-relaxed text-red-500">
+                  {error}
+                </p>
+                <h6 className="block -mb-2 font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-inherit">
+                  Your Username
+                </h6>
+                <div className="relative h-11 w-full min-w-[200px]">
+                  <input
+                    className="w-full h-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    placeholder=" "
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                  />
+                  <label className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500">
+                    username
+                  </label>
+                </div>
+                <h6 className="block -mb-2 font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-inherit">
+                  Your Address
+                </h6>
+                <div className="">
+                  <div className="relative w-full min-w-[200px]">
+                    <textarea
+                      className="peer h-full min-h-[100px] w-full resize-none rounded-[7px] border border-blue-gray-200 border-t-transparent bg-transparent px-3 py-2.5 font-sans text-sm font-normal text-blue-gray-700 outline outline-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:resize-none disabled:border-0 disabled:bg-blue-gray-50"
+                      placeholder=" "
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                    ></textarea>
+                    <label className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-blue-gray-400 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500">
+                      Address
+                    </label>
+                  </div>
+                </div>
+
+                <h6 className="block -mb-2 font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-inherit">
+                  Your Phone
+                </h6>
+                <div className="relative h-11 w-full min-w-[200px]">
+                  <input
+                    className="w-full h-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    placeholder=" "
+                    type="number"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                  <label className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500">
+                    phone
+                  </label>
+                </div>
+              </div>
+              <div className="p-6 pt-0">
+                <Button
+                  type="submit"
+                  size="md"
+                  disabled={loading}
+                  className="mt-6 flex justify-center items-center bg-accent"
+                  fullWidth
+                >
+                  {loading ? (
+                    <>
+                      <div className="flex items-center gap-4 justify-center">
+                        <Spinner className="h-6 w-6" color="black" />
+                        <h1 className="text-black">Updating...</h1>
+                      </div>
+                    </>
+                  ) : (
+                    "Update"
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="address" className="font-semibold">
-              Address:
-            </label>
-            <textarea
-              maxLength={200}
-              type="text"
-              id="address"
-              className="p-1 rounded border border-black resize-none"
-              value={formData.address}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="font-semibold">
-              Phone:
-            </label>
-            <input
-              type="text"
-              id="phone"
-              className="p-1 rounded border border-black"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserDetails}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update"}
-          </button>
-          <button
-            disabled={loading}
-            type="button"
-            onClick={() => setUpdateProfileDetailsPanel(false)}
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Change Password"}
-          </button>
         </div>
-      ) : (
-        <div className="flex flex-col border shadow-2xl border-gray-400 rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">
-            Change Password
-          </h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter old password:
-            </label>
-            <input
-              type="text"
-              id="oldpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.oldpassword}
-              onChange={handlePass}
-            />
+      )}
+
+      {/* change password form */}
+
+      {changePassword && (
+        <div
+          data-dialog-backdrop="sign-in-dialog"
+          data-dialog-backdrop-close="true"
+          className=" fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-white bg-opacity-0  backdrop-blur-sm transition-opacity duration-300"
+        >
+          <div className="relative mx-auto flex w-full max-w-[24rem] flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md">
+            <form onSubmit={updateUserPassword}>
+              <div className="flex flex-col gap-4 p-6">
+                <div className="flex justify-between">
+                  <h4 className="block font-sans text-2xl antialiased font-semibold leading-snug tracking-normal text-blue-gray-900">
+                    Change Password
+                  </h4>
+
+                  <button
+                    className="flex justify-center items-center h-8 max-h-[32px] w-8 max-w-[32px] select-none rounded-lg text-center align-middle font-sans text-xs font-medium uppercase text-gray-800 bg-gray-200/20 transition-all hover:bg-gray-300/50 active:bg-gray-300/50 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                    type="button"
+                    onClick={() => setChangePassword(false)}
+                  >
+                    <span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="w-6 h-6"
+                        stroke-width="2"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+                <p className="block mb-3 text-center font-sans text-base antialiased font-normal leading-relaxed text-red-500">
+                  {error}
+                </p>
+                <h6 className="block -mb-2 font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-inherit">
+                  Your Old Password
+                </h6>
+                <div className="relative h-11 w-full min-w-[200px]">
+                  <input
+                    className="w-full h-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    placeholder=" "
+                    type="text"
+                    name="oldpassword"
+                    value={updatePassword.oldpassword}
+                    onChange={handlePass}
+                  />
+                  <label className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500">
+                    password
+                  </label>
+                </div>
+
+                <h6 className="block -mb-2 font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-inherit">
+                  Your New Password
+                </h6>
+                <div className="relative h-11 w-full min-w-[200px]">
+                  <input
+                    className="w-full h-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                    placeholder=" "
+                    type="text"
+                    name="newpassword"
+                    value={updatePassword.newpassword}
+                    onChange={handlePass}
+                  />
+                  <label className="before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none !overflow-visible truncate text-[11px] font-normal leading-tight text-gray-500 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-blue-gray-200 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-blue-gray-200 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[4.1] peer-placeholder-shown:text-blue-gray-500 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-gray-900 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-gray-900 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-gray-900 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-blue-gray-500">
+                    password
+                  </label>
+                </div>
+              </div>
+              <div className="p-6 pt-0">
+                <Button
+                  type="submit"
+                  size="md"
+                  disabled={loading}
+                  className="mt-6 flex justify-center items-center bg-accent"
+                  fullWidth
+                >
+                  {loading ? (
+                    <>
+                      <div className="flex items-center gap-4 justify-center">
+                        <Spinner className="h-6 w-6" color="black" />
+                        <h1 className="text-black">Changing...</h1>
+                      </div>
+                    </>
+                  ) : (
+                    "Change"
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter new password:
-            </label>
-            <input
-              type="text"
-              id="newpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.newpassword}
-              onChange={handlePass}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserPassword}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update Password"}
-          </button>
-          <button
-            disabled={loading}
-            onClick={() => {
-              setUpdateProfileDetailsPanel(true);
-              setUpdatePassword({
-                oldpassword: "",
-                newpassword: "",
-              });
-            }}
-            type="button"
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95 w-24"
-          >
-            {loading ? "Loading..." : "Back"}
-          </button>
         </div>
       )}
     </div>

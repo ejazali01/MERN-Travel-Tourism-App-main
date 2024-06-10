@@ -32,7 +32,7 @@ const App = () => {
           {/* admin */}
           <Route path="/my" element={<AdminRoute />}>
             <Route path="dashboard" element={<DashboardLayout />} />
-            {/* <Route path="admin" element={<AdminDashboard />} /> */}
+            <Route path="admin" element={<AdminDashboard />} />
             <Route
               path="admin/update-package/:id"
               element={<UpdatePackage />}

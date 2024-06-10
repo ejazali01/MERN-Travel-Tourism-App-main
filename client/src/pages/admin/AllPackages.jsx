@@ -5,8 +5,11 @@ import { Link } from "react-router-dom";
 import { ImagePlacehoderSkeleton } from "../components/skeletons/ImagePlacehoderSkeleton";
 import Empty from "../components/Empty";
 import { Tabs, TabsHeader, Tab } from "@material-tailwind/react";
+import { useDispatch } from "react-redux";
+import { addPackageCount } from "../../redux/dashboard/dashboardSlice";
 
 const AllPackages = () => {
+  const dispatch = useDispatch()
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
@@ -56,6 +59,8 @@ const AllPackages = () => {
       console.log(error);
     }
   };
+
+  dispatch(addPackageCount(packages.length))
 
   return (
     <>

@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import defaultProfileImg from "../../assets/images/profile.png";
+// import { useSelector } from "react-redux";
+import { ProfileMenu } from "./ProfileMenu";
+// import defaultProfileImg from "../../assets/images/profile.png";
 
 const Header = () => {
-  const { currentUser } = useSelector((state) => state.user);
+  // const { currentUser } = useSelector((state) => state.user);
 
   return (
     <>
@@ -54,28 +55,8 @@ const Header = () => {
               <li className="hover:border-b-4 border-b-accent hover:transition-all hover:ease-in-out hover:duration-300 font-normal ">
                 <Link to="/about">About</Link>
               </li>
-              <li className="w-10 h-10 flex items-center justify-center">
-                {currentUser ? (
-                  <Link
-                    to={`/my/${
-                      currentUser.user_role === 1 ? "dashboard" : "profile"
-                    }`}
-                  >
-                    <img
-                      src={currentUser.avatar || defaultProfileImg}
-                      alt={currentUser.username}
-                      className="border w-10 h-10 border-black rounded-[50%]"
-                    />
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="middle none rounded-lg bg-[#3da9fc] py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 focus:opacity-[0.85] focus:shadow-none active:opacity-[0.85] active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                    data-ripple-light="true"
-                  >
-                    Login
-                  </Link>
-                )}
+              <li >
+                <ProfileMenu/>
               </li>
             </ul>
           </div>
